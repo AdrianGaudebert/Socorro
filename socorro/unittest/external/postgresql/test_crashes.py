@@ -152,91 +152,112 @@ class IntegrationTestCrashes(PostgreSQLTestCase):
 
         # Insert data for frequency test
         cursor.execute("""
-            INSERT INTO reports
+            INSERT INTO reports_clean
             (
-                id,
                 uuid,
                 build,
-                signature,
+                signature_id,
                 os_name,
                 date_processed,
-                user_comments,
-                product,
-                version,
-                release_channel
+                product_version_id,
+                release_channel,
+                process_type,
+                address_id,
+                reason_id,
+                os_version_id,
+                flash_version_id,
+                domain_id
             )
             VALUES
             (
-                1,
                 'abc',
                 '2012033116',
-                'js',
+                '5',
                 'Windows NT',
                 '%(now)s',
-                null,
-                'Firefox',
-                '11.0',
-                'Nightly'
+                '1',
+                'Nightly',
+                'Browser',
+                11427500,
+                245,
+                71,
+                215,
+                631719
             ),
             (
-                2,
                 'def',
                 '2012033116',
-                'js',
+                '5',
                 'Linux',
                 '%(now)s',
-                'hello',
-                'Firefox',
-                '11.0',
-                'Nightly'
+                '1',
+                'Nightly',
+                'Browser',
+                11427500,
+                245,
+                71,
+                215,
+                631719
             ),
             (
-                3,
                 'hij',
                 '2012033117',
-                'js',
+                '5',
                 'Windows NT',
                 '%(now)s',
-                'hah',
-                'Firefox',
-                '11.0',
-                'Nightly'
+                '1',
+                'Nightly',
+                'Browser',
+                11427500,
+                245,
+                71,
+                215,
+                631719
             ),
             (
-                4,
                 'klm',
                 '2012033117',
-                'blah',
+                '6',
                 'Unknown',
                 '%(now)s',
-                null,
-                'Firefox',
-                '14.0b1',
-                'Beta'
+                '5',
+                'Beta',
+                'Browser',
+                11427500,
+                245,
+                71,
+                215,
+                631719
             ),
             (
-                5,
                 'nop',
                 '2012033117',
-                'cool_sig',
+                '7',
                 'Unknown',
                 '%(now)s',
-                'hi!',
-                'Firefox',
-                '14.0b',
-                'Beta'
+                '4',
+                'Beta',
+                'Browser',
+                11427500,
+                245,
+                71,
+                215,
+                631719
             ),
             (
-                6,
                 'qrs',
                 '2012033117',
-                'cool_sig',
+                '7',
                 'Linux',
                 '%(now)s',
-                'meow',
-                'WaterWolf',
-                '2.0b',
-                'Beta'
+                '6',
+                'Beta',
+                'Browser',
+                11427500,
+                245,
+                71,
+                215,
+                631719
             )
         """ % {"now": cls.now})
 
@@ -467,7 +488,9 @@ class IntegrationTestCrashes(PostgreSQLTestCase):
             INSERT INTO signatures
             (signature_id, signature)
             VALUES
-            (5, 'js')
+            (5, 'js'),
+            (6, 'blah'),
+            (7, 'cool_sig')
         """)
 
         cursor.execute("""
@@ -820,7 +843,7 @@ class IntegrationTestCrashes(PostgreSQLTestCase):
         }
 
         expected = {
-            'hits': {now: 3},
+            'hits': {now: 6},
             'total': 1
         }
 
@@ -849,7 +872,7 @@ class IntegrationTestCrashes(PostgreSQLTestCase):
         expected = {
             'hits': {
                 yesterday: 2,
-                now: 3
+                now: 6
             },
             'total': 2
         }
@@ -880,24 +903,16 @@ class IntegrationTestCrashes(PostgreSQLTestCase):
         res_expected = {
             "hits": [
                 {
-                    "build_date": "2012033117",
-                    "count": 1,
-                    "frequency": 1.0,
+                    "build_date": 2012033117,
                     "total": 1,
                     "count_windows": 1,
-                    "frequency_windows": 1.0,
                     "count_linux": 0,
-                    "frequency_linux": 0
                 },
                 {
-                    "build_date": "2012033116",
-                    "count": 2,
-                    "frequency": 1.0,
+                    "build_date": 2012033116,
                     "total": 2,
                     "count_windows": 1,
-                    "frequency_windows": 1.0,
                     "count_linux": 1,
-                    "frequency_linux": 1.0
                 }
             ],
             "total": 2
@@ -914,14 +929,10 @@ class IntegrationTestCrashes(PostgreSQLTestCase):
         res_expected = {
             "hits": [
                 {
-                    "build_date": "2012033117",
-                    "count": 1,
-                    "frequency": 1.0,
+                    "build_date": 2012033117,
                     "total": 1,
                     "count_windows": 0,
-                    "frequency_windows": 0.0,
                     "count_linux": 0,
-                    "frequency_linux": 0.0
                 }
             ],
             "total": 1
@@ -939,7 +950,7 @@ class IntegrationTestCrashes(PostgreSQLTestCase):
         eq_(res["total"], 0)
 
     # -------------------------------------------------------------------------
-    def test_get_exploitibility(self):
+    def test_get_exploitability(self):
         crashes = Crashes(config=self.config)
 
         res_expected = {

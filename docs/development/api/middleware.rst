@@ -800,28 +800,18 @@ In normal cases, return something like this::
     {
         "hits": [
             {
-                "count": 167,
-                "build_date": "20120129064235",
+                "build_date": 20120129064235,
                 "count_mac": 0,
-                "frequency_windows": 1,
                 "count_windows": 167,
-                "frequency": 1,
                 "count_linux": 0,
                 "total": 167,
-                "frequency_linux": 0,
-                "frequency_mac": 0
             },
             {
-                "count": 1,
-                "build_date": "20120129063944",
+                "build_date": 20120129063944,
                 "count_mac": 1,
-                "frequency_windows": 0,
                 "count_windows": 0,
-                "frequency": 1,
                 "count_linux": 0,
                 "total": 1,
-                "frequency_linux": 0,
-                "frequency_mac": 1
             }
         ],
         "total": 2

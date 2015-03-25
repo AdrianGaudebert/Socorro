@@ -375,6 +375,7 @@ class Crashes(PostgreSQLBase):
         if "to" in kwargs and "to_date" not in kwargs:
             kwargs["to_date"] = kwargs.get("to")
 
+        context = self.context.webapi
         params = self.prepare_search_params(**kwargs)
 
         # Creating the parameters for the sql query
@@ -386,42 +387,29 @@ class Crashes(PostgreSQLBase):
         sql_select = ["""
             SELECT
                 r.build AS build_date,
-                COUNT(CASE WHEN (r.signature = %(signature)s) THEN 1 END)
-                    AS count,
-                CAST(COUNT(CASE WHEN (r.signature = %(signature)s) THEN 1 END)
-                    AS FLOAT(10)) / count(r.id) AS frequency,
-                COUNT(r.id) AS total
+                COUNT(r.uuid) AS total
         """]
 
         # Adding count for each OS
-        if hasattr(self.context, 'webapi'):
-            context = self.context.webapi
-        else:
-            # old middleware
-            context = self.context
-
-        for i in context.platforms:
+        for p in context.platforms:
             sql_select.append("""
-                COUNT(CASE WHEN (r.signature = %%(signature)s
-                      AND r.os_name = '%s') THEN 1 END) AS count_%s
-            """ % (i["name"], i["id"]))
-            sql_select.append("""
-                CASE WHEN (COUNT(CASE WHEN (r.os_name = '%s') THEN 1 END)
-                > 0) THEN (CAST(COUNT(CASE WHEN (r.signature = %%(signature)s
-                AND r.os_name = '%s') THEN 1 END) AS FLOAT(10)) /
-                COUNT(CASE WHEN (r.os_name = '%s') THEN 1 END)) ELSE 0.0
-                END AS frequency_%s
-            """ % (i["name"], i["name"], i["name"], i["id"]))
+                COUNT(CASE WHEN (r.os_name = '%s') THEN 1 END) AS count_%s
+            """ % (p["name"], p["id"]))
 
         sql_select = ", ".join(sql_select)
 
-        sql_from = self.build_reports_sql_from(params)
+        sql_from = """
+            FROM reports_clean r
+            JOIN signatures s USING ( signature_id )
+            JOIN product_versions pv USING ( product_version_id )
+        """
 
         (sql_where, sql_params) = self.build_reports_sql_where(
             params,
             sql_params,
             context
         )
+        sql_where += "AND s.signature = %(signature)s"
 
         sql_group = "GROUP BY r.build"
         sql_order = "ORDER BY r.build DESC"
@@ -433,15 +421,18 @@ class Crashes(PostgreSQLBase):
         )
 
         # Query the database
-        error_message = "Failed to retrieve extensions from PostgreSQL"
+        error_message = "Failed to retrieve frequencies from PostgreSQL"
         results = self.query(sql, sql_params, error_message=error_message)
 
-        fields = ["build_date", "count", "frequency", "total"]
+        fields = ["build_date", "total"]
         for platform in context.platforms:
             fields.append("count_%s" % platform["id"])
-            fields.append("frequency_%s" % platform["id"])
 
-        frequencies = [dict(zip(fields, row)) for row in results]
+        frequencies = []
+        for row in results:
+            hit = dict(zip(fields, row))
+            hit['build_date'] = int(hit['build_date'])
+            frequencies.append(hit)
 
         return {
             "hits": frequencies,
