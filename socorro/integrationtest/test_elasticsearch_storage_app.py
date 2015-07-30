@@ -4,7 +4,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 """This app tests that inserting a crash report into elasticsearch works.
-It simply uses socorro.external.elasticsearch.crashstorage to send a report
+It simply uses socorro.external.es.crashstorage to send a report
 and verifies that it was correctly inserted. """
 
 # This app can be invoked like this:
@@ -18,8 +18,8 @@ import os
 from configman import ConfigurationManager, Namespace
 
 from socorro.app import generic_app
-from socorro.external.elasticsearch.crashstorage import (
-    ElasticSearchCrashStorage
+from socorro.external.es.crashstorage import (
+    ESCrashStorage
 )
 from socorro.lib.datetimeutil import string_to_datetime
 from socorro.unittest.external.elasticsearch.test_supersearch import (
@@ -35,7 +35,7 @@ class IntegrationTestElasticsearchStorageApp(generic_app.App):
     required_config = Namespace()
     required_config.add_option(
         'elasticsearch_storage_class',
-        default=ElasticSearchCrashStorage,
+        default=ESCrashStorage,
         doc='The class to use to store crash reports in elasticsearch.'
     )
 
@@ -51,7 +51,7 @@ class IntegrationTestElasticsearchStorageApp(generic_app.App):
     )
 
     def get_config_context(self):
-        storage_config = ElasticSearchCrashStorage.get_required_config()
+        storage_config = ESCrashStorage.get_required_config()
         storage_config.add_option('logger', default=self.config.logger)
         values_source = {
             'resource.elasticsearch.elasticsearch_default_index': 'socorro_integration_test',

@@ -68,7 +68,7 @@ exacttarget_user=
     # doc: None
     # Inspect the automatically written value below to make sure it is valid
     #   as a Python object for its intended converter function.
-    #elasticsearch_class='socorro.external.elasticsearch.connection_context.ConnectionContext'
+    #elasticsearch_class='socorro.external.es.connection_context.ConnectionContext'
 
     # name: elasticsearch_doctype
     # doc: the default doctype to use in elasticsearch
@@ -104,7 +104,7 @@ exacttarget_user=
     # doc: None
     # Inspect the automatically written value below to make sure it is valid
     #   as a Python object for its intended converter function.
-    #index_creator_class='socorro.external.elasticsearch.crashstorage.ElasticSearchCrashStorage'
+    #index_creator_class='socorro.external.es.crashstorage.ElasticSearchCrashStorage'
 
     # name: redactor_class
     # doc: the name of the class that implements a 'redact' method

@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 """This app tests that inserting a crash report into elasticsearch works.
-It simply uses socorro.external.elasticsearch.crashstorage to send a report
+It simply uses socorro.external.es.crashstorage to send a report
 and verifies that it was correctly inserted.
 
 This app can be invoked like this:
@@ -31,8 +31,8 @@ class ElasticsearchBackfillApp(generic_app.App):
     required_config.namespace('elasticsearch')
     required_config.elasticsearch.add_option(
         'storage_class',
-        default='socorro.external.elasticsearch.crashstorage.'
-                'ElasticSearchCrashStorage',
+        default='socorro.external.es.crashstorage.'
+                'ESCrashStorage',
         from_string_converter=converters.class_converter,
         doc='The class to use to store crash reports in elasticsearch.'
     )
