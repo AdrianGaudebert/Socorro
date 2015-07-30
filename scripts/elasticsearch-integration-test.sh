@@ -14,8 +14,9 @@ export PYTHONPATH=.
 echo " Done."
 
 echo -n "INFO: running elasticsearch integration"
+# XXXX Not even sure if this works
 python socorro/integrationtest/test_elasticsearch_storage_app.py \
-    --elasticsearch_urls=$elasticsearch_urls \
-    --elasticsearch_index=socorro_integration_test_reports \
-    --elasticsearch_emails_index=socorro_integration_test \
-    --elasticsearch_default_index=socorro_integration_test
+    --elasticsearch.elasticsearch_urls=$elasticsearch_urls \
+    --elasticsearch.elasticsearch_index=socorro_integration_test_reports \
+    --elasticsearch.elasticsearch_emails_index=socorro_integration_test \
+    --elasticsearch.elasticsearch_default_index=socorro_integration_test

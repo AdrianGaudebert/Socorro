@@ -63,6 +63,8 @@ class SetupSuperSearchApp(generic_app.App):
 
         # Index the data.
         es_connection = index_creator.es
+        # XXX ADRIAN: How should this be rewritten now that the old
+        # pyelasticsearch is gone as socorro.external.elasticsearch disappears.
         es_connection.bulk_index(
             index='socorro',
             doc_type='supersearch_fields',

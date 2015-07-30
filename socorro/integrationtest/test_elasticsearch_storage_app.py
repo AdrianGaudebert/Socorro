@@ -74,11 +74,14 @@ class IntegrationTestElasticsearchStorageApp(generic_app.App):
 
     def main(self):
         storage_config = self.get_config_context()
-        storage = self.config.elasticsearch_storage_class(storage_config)
 
-        # Create the supersearch fields.
-        storage.es.bulk_index(
-            index=storage_config.elasticsearch_default_index,
+        storage = self.config.elasticsearch_storage_class(storage_config)
+        es_context = storage.config.elasticsearch.elasticsearch_class(
+            config=self.config.elasticsearch
+        )
+        # ADRIAN: Lost here.
+        es_context.connection().bulk(
+            index=self.config.elasticsearch.elasticsearch_default_index,
             doc_type='supersearch_fields',
             docs=SUPERSEARCH_FIELDS.values(),
             id_field='name',
