@@ -22,7 +22,7 @@ from socorro.external.es.crashstorage import (
     ESCrashStorage
 )
 from socorro.lib.datetimeutil import string_to_datetime
-from socorro.unittest.external.elasticsearch.test_supersearch import (
+from socorro.unittest.external.es.base import (
     SUPERSEARCH_FIELDS
 )
 
