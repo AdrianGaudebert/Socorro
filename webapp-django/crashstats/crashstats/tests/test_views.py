@@ -571,6 +571,31 @@ class TestViews(BaseTestViews):
         ok_(json.loads(''.join(response.streaming_content)))
         eq_(response['Content-Type'], 'application/json')
 
+    def test_healthcheck_elb(self):
+        response = self.client.get('/healthcheck', {'elb': 'true'})
+        eq_(response.status_code, 200)
+        eq_(json.loads(response.content)['ok'], True)
+
+        # This time, ignoring the results, make sure that running
+        # this does not cause an DB queries.
+        self.assertNumQueries(
+            0,
+            self.client.get,
+            '/healthcheck',
+            {'elb': 'true'}
+        )
+
+    def test_healthcheck(self):
+        response = self.client.get('/healthcheck')
+        eq_(response.status_code, 200)
+        eq_(json.loads(response.content)['ok'], True)
+
+        self.assertNumQueries(
+            1,
+            self.client.get,
+            '/healthcheck',
+        )
+
     @mock.patch('requests.get')
     def test_handler500(self, rget):
         root_urlconf = __import__(

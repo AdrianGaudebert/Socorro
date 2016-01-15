@@ -5,6 +5,7 @@ import logging
 import math
 import urllib
 import gzip
+import os
 from collections import defaultdict
 from operator import itemgetter
 from io import BytesIO
@@ -17,6 +18,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
 from django.core.cache import cache
+from django.contrib.auth.models import Permission
 from django.utils.http import urlquote
 from django.contrib import messages
 
@@ -98,6 +100,29 @@ def robots_txt(request):
         '%s: /' % ('Allow' if settings.ENGAGE_ROBOTS else 'Disallow'),
         content_type='text/plain',
     )
+
+
+def healthcheck(request):
+    if not request.GET.get('elb') in ('1', 'true'):
+        # Perform some really basic DB queries.
+        # There will always be permissions created
+        assert Permission.objects.all().count() > 0
+
+        # We should also be able to set and get a cache value
+        cache_key = '__healthcheck__'
+        cache.set(cache_key, 1, 10)
+        assert cache.get(cache_key)
+        cache.delete(cache_key)
+
+        # Our filesystem should be writable
+        file_path = os.path.join(settings.ROOT, 'healthcheck.test')
+        with open(file_path, 'w') as f:
+            f.write('Works\n')
+        os.remove(file_path)
+
+        # XXX perhaps we should do a really basic Elasticsearch query
+
+    return http.JsonResponse({'ok': True})
 
 
 def has_builds(product, versions):
