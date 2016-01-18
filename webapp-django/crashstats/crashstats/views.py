@@ -1,6 +1,7 @@
 import copy
 import json
 import datetime
+import elasticsearch
 import logging
 import math
 import urllib
@@ -120,7 +121,12 @@ def healthcheck(request):
             f.write('Works\n')
         os.remove(file_path)
 
-        # XXX perhaps we should do a really basic Elasticsearch query
+        # Do a really basic Elasticsearch query
+        es_settings = settings.SOCORRO_IMPLEMENTATIONS_CONFIG['elasticsearch']
+        es = elasticsearch.Elasticsearch(
+            hosts=es_settings['elasticsearch_urls']
+        )
+        es.info()  # will raise an error if there's a problem with the cluster
 
     return http.JsonResponse({'ok': True})
 
