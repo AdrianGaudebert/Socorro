@@ -25,6 +25,23 @@ def string_to_list(input_str):
 class Correlations(CorrelationsStorageBase):
 
     required_config = Namespace()
+
+    # required_config.add_option(
+    #     'transaction_executor_class',
+    #     default="socorro.database.transaction_executor."
+    #     "TransactionExecutorWithLimitedBackoff",
+    #     doc='a class that will manage transactions',
+    #     from_string_converter=class_converter,
+    # )
+
+    required_config.elasticsearch = Namespace()
+    required_config.elasticsearch.add_option(
+        'elasticsearch_class',
+        default='socorro.external.es.connection_context.ConnectionContext',
+        from_string_converter=class_converter,
+        reference_value_from='resource.elasticsearch',
+    )
+
     required_config.add_option(
         'index_creator',
         default='socorro.external.es.index_creator.IndexCreator',
@@ -53,6 +70,10 @@ class Correlations(CorrelationsStorageBase):
     def __init__(self, config):
         super(Correlations, self).__init__(config)
         self.config = config
+
+        self.es_context = self.config.elasticsearch.elasticsearch_class(
+            config=self.config.elasticsearch
+        )
 
         self.indices_cache = set()
 
@@ -91,7 +112,11 @@ class CoreCounts(Correlations):
         # print "counts_summary_structure"
         # pprint(counts_summary_structure)
 
+
         date = self._prefix_to_datetime_date(kwargs['prefix'])
+        index = self.get_index_for_date(date)
+        self.create_correlations_index(index)
+
         notes = counts_summary_structure['notes']
         product = kwargs['key'].split('_')[0]
         version = kwargs['key'].split('_')[1]
@@ -119,7 +144,13 @@ class CoreCounts(Correlations):
                     'notes': notes,
                 }
                 pprint(doc)
-        # self.docs.append(doc)
+                # self.docs.append(doc)
+                self.es_context.index(
+                    index=index,
+                    # see correlations_index_settings.json
+                    doc_type='correlations',
+                    doc=doc,
+                )
 
     def close(self):
         # XXX Consider, accumulate docs in self.store and here in the close
@@ -134,6 +165,7 @@ class InterestingModules(Correlations):
         counts_summary_structure,
         **kwargs  # XXX unpack this here with what we actually need
     ):
+
         # ss=str(counts_summary_structure)
         # if 1:
         #     print "interesting counts_summary_structure"
@@ -143,6 +175,9 @@ class InterestingModules(Correlations):
         #     pprint(kwargs)
 
         date = self._prefix_to_datetime_date(kwargs['prefix'])
+        index = self.get_index_for_date(date)
+        self.create_correlations_index(index)
+
         notes = counts_summary_structure['notes']
         product = kwargs['key'].split('_')[0]
         version = kwargs['key'].split('_')[1]
@@ -168,6 +203,12 @@ class InterestingModules(Correlations):
                     'notes': notes,
                 }
                 print doc
+                self.es_context.index(
+                    index=index,
+                    # see correlations_index_settings.json
+                    doc_type='correlations',
+                    doc=doc,
+                )
 
     def close(self):
         # XXX Consider, accumulate docs in self.store and here in the close
