@@ -89,8 +89,10 @@ class Correlations(CorrelationsStorageBase):
             es_settings = json.loads(settings_json)
 
             index_creator = self.config.index_creator(self.config)
+            print "Create Index", es_index
             index_creator.create_index(es_index, es_settings)
-
+            print "Created Index", es_index
+            print
             self.indices_cache.add(es_index)
 
     def _prefix_to_datetime_date(self, prefix):
