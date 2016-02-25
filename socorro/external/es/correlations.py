@@ -89,10 +89,9 @@ class Correlations(CorrelationsStorageBase):
             es_settings = json.loads(settings_json)
 
             index_creator = self.config.index_creator(self.config)
-            print "Create Index", es_index
+            # This is resilient to being called repeatedly even
+            # when the index already exists.
             index_creator.create_index(es_index, es_settings)
-            print "Created Index", es_index
-            print
             self.indices_cache.add(es_index)
 
     def _prefix_to_datetime_date(self, prefix):
@@ -110,10 +109,6 @@ class CoreCounts(Correlations):
         counts_summary_structure,
         **kwargs
     ):
-
-        # print "counts_summary_structure"
-        # pprint(counts_summary_structure)
-
 
         date = self._prefix_to_datetime_date(kwargs['prefix'])
         index = self.get_index_for_date(date)
@@ -147,7 +142,7 @@ class CoreCounts(Correlations):
                 }
                 pprint(doc)
                 # self.docs.append(doc)
-                self.es_context.index(
+                print self.es_context.index(
                     index=index,
                     # see correlations_index_settings.json
                     doc_type='correlations',
@@ -205,7 +200,7 @@ class InterestingModules(Correlations):
                     'notes': notes,
                 }
                 print doc
-                self.es_context.index(
+                print self.es_context.index(
                     index=index,
                     # see correlations_index_settings.json
                     doc_type='correlations',
