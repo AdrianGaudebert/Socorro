@@ -5,6 +5,7 @@
 import datetime
 import json
 import os
+import hashlib
 
 from configman import Namespace
 from configman.converters import class_converter
@@ -100,6 +101,21 @@ class Correlations(CorrelationsStorageBase):
         dd = int(prefix[6:8])
         return datetime.date(yy, mm, dd)
 
+    @staticmethod
+    def make_id(document):
+        string_parts = []
+        for key, value in sorted(document.items()):
+            if isinstance(value, datetime.date):
+                value = value.isoformat()
+            if isinstance(value, int):
+                value = str(value)
+            if isinstance(value, basestring):
+                string_parts.append(value)
+        return hashlib.md5(
+            (''.join(string_parts)).encode('utf-8')
+        ).hexdigest()
+
+
 
 from pprint import pprint
 class CoreCounts(Correlations):
@@ -135,18 +151,21 @@ class CoreCounts(Correlations):
                     'version': version,
                     'count': count,
                     'signature': signature,
-                    'payload': payload,
+                    'payload': json.dumps(payload),
                     'date': date,
                     'key': kwargs['name'],
                     'notes': notes,
                 }
+                id = self.make_id(doc)
                 pprint(doc)
+                print id
                 # self.docs.append(doc)
                 print self.es_context.index(
                     index=index,
                     # see correlations_index_settings.json
                     doc_type='correlations',
-                    doc=doc,
+                    body=doc,
+                    id=id
                 )
 
     def close(self):
@@ -194,17 +213,20 @@ class InterestingModules(Correlations):
                     'version': version,
                     'count': count,
                     'signature': signature,
-                    'payload': payload,
+                    'payload': json.dumps(payload),
                     'date': date,
                     'key': kwargs['name'],
                     'notes': notes,
                 }
+                id = self.make_id(doc)
                 print doc
+                print id
                 print self.es_context.index(
                     index=index,
                     # see correlations_index_settings.json
                     doc_type='correlations',
-                    doc=doc,
+                    body=doc,
+                    id=id
                 )
 
     def close(self):
