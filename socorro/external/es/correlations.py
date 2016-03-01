@@ -160,18 +160,19 @@ class CoreCounts(Correlations):
                 print doc
                 print id
                 # self.docs.append(doc)
-                try:
-                    self.es_context.index(
+                with self.es_context() as conn:
+                    conn.index(
                         index=index,
                         # see correlations_index_settings.json
                         doc_type='correlations',
                         body=doc,
                         id=id
                     )
-                except Exception:
-                    import sys
-                    print sys.exc_info()
-                    print
+                # except Exception:
+                #
+                #     import sys
+                #     print sys.exc_info()
+                #     print
 
     def close(self):
         # XXX Consider, accumulate docs in self.store and here in the close
@@ -186,14 +187,6 @@ class InterestingModules(Correlations):
         counts_summary_structure,
         **kwargs  # XXX unpack this here with what we actually need
     ):
-
-        # ss=str(counts_summary_structure)
-        # if 1:
-        #     print "interesting counts_summary_structure"
-        #     pprint(counts_summary_structure)
-        #
-        #     print "KWARGS"
-        #     pprint(kwargs)
 
         date = self._prefix_to_datetime_date(kwargs['prefix'])
         index = self.get_index_for_date(date)
@@ -226,18 +219,18 @@ class InterestingModules(Correlations):
                 id = self.make_id(doc)
                 print doc
                 print id
-                try:
-                    self.es_context.index(
+                with self.es_context() as conn:
+                    conn.index(
                         index=index,
                         # see correlations_index_settings.json
                         doc_type='correlations',
                         body=doc,
                         id=id
                     )
-                except Exception:
-                    import sys
-                    print sys.exc_info()
-                    print
+                # except Exception:
+                #     import sys
+                #     print sys.exc_info()
+                #     print
 
     def close(self):
         # XXX Consider, accumulate docs in self.store and here in the close

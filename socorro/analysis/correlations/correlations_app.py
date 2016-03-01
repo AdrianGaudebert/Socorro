@@ -149,9 +149,5 @@ class CorrelationsApp(FetchTransformSaveWithSeparateNewCrashSourceApp):
         self.config.logger.debug('CorrelationsApp closes')
         for a_rule_set_name, a_rule_set in self.rule_system.iteritems():
             self.config.logger.debug('closing %s', a_rule_set_name)
-            try:
-                a_rule_set.close()
-            except AttributeError:
-                # guess we don't need to close that rule
-                pass
+            a_rule_set.close()
         self.config.logger.debug('done closing rules')
