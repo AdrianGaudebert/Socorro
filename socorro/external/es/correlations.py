@@ -116,8 +116,6 @@ class Correlations(CorrelationsStorageBase):
         ).hexdigest()
 
 
-
-from pprint import pprint
 class CoreCounts(Correlations):
 
     def store(
@@ -135,16 +133,13 @@ class CoreCounts(Correlations):
         version = kwargs['key'].split('_')[1]
         for platform in counts_summary_structure:
             if platform not in self.config.recognized_platforms:
-                # print "%r is not a platform!" % (platform,)
                 continue
             count = counts_summary_structure[platform]['count']
             signatures = counts_summary_structure[platform]['signatures']
             if not signatures:
-                # print "NO SIGNATURES!"
                 continue
 
             for signature, payload in signatures.items():
-                # payload = signatures[signature]
                 doc = {
                     'platform': platform,
                     'product': product,
@@ -159,7 +154,6 @@ class CoreCounts(Correlations):
                 id = self.make_id(doc)
                 print doc
                 print id
-                # self.docs.append(doc)
                 with self.es_context() as conn:
                     conn.index(
                         index=index,
@@ -168,16 +162,9 @@ class CoreCounts(Correlations):
                         body=doc,
                         id=id
                     )
-                # except Exception:
-                #
-                #     import sys
-                #     print sys.exc_info()
-                #     print
 
     def close(self):
-        # XXX Consider, accumulate docs in self.store and here in the close
-        # do a bulk save.
-        print "Closing CoreCounts"
+        pass
 
 
 class InterestingModules(Correlations):
@@ -227,12 +214,6 @@ class InterestingModules(Correlations):
                         body=doc,
                         id=id
                     )
-                # except Exception:
-                #     import sys
-                #     print sys.exc_info()
-                #     print
 
     def close(self):
-        # XXX Consider, accumulate docs in self.store and here in the close
-        # do a bulk save.
-        print "Closing InterestingModules"
+        pass
