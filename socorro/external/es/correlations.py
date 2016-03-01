@@ -157,16 +157,21 @@ class CoreCounts(Correlations):
                     'notes': notes,
                 }
                 id = self.make_id(doc)
-                pprint(doc)
+                print doc
                 print id
                 # self.docs.append(doc)
-                print self.es_context.index(
-                    index=index,
-                    # see correlations_index_settings.json
-                    doc_type='correlations',
-                    body=doc,
-                    id=id
-                )
+                try:
+                    self.es_context.index(
+                        index=index,
+                        # see correlations_index_settings.json
+                        doc_type='correlations',
+                        body=doc,
+                        id=id
+                    )
+                except Exception:
+                    import sys
+                    print sys.exc_info()
+                    print
 
     def close(self):
         # XXX Consider, accumulate docs in self.store and here in the close
@@ -221,13 +226,18 @@ class InterestingModules(Correlations):
                 id = self.make_id(doc)
                 print doc
                 print id
-                print self.es_context.index(
-                    index=index,
-                    # see correlations_index_settings.json
-                    doc_type='correlations',
-                    body=doc,
-                    id=id
-                )
+                try:
+                    self.es_context.index(
+                        index=index,
+                        # see correlations_index_settings.json
+                        doc_type='correlations',
+                        body=doc,
+                        id=id
+                    )
+                except Exception:
+                    import sys
+                    print sys.exc_info()
+                    print
 
     def close(self):
         # XXX Consider, accumulate docs in self.store and here in the close
