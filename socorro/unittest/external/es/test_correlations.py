@@ -6,7 +6,11 @@ import datetime
 
 from nose.tools import eq_, ok_
 
-from socorro.external.es.correlations import Correlations
+from socorro.external.es.correlations import (
+    Correlations,
+    CoreCounts,
+    InterestingModules,
+)
 from socorro.unittest.external.es.base import ElasticsearchTestCase
 
 # Uncomment these lines to decrease verbosity of the elasticsearch library
@@ -53,3 +57,7 @@ class IntegrationTestCorrelations(ElasticsearchTestCase):
 
         # We should be able to create that index again without any errors.
         correlations.create_correlations_index(es_index)
+
+    def test_storing_core_counts(self):
+        correlations = Correlations(config=self.config)
+        

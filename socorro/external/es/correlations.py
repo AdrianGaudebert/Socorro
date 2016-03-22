@@ -15,10 +15,12 @@ from socorro.analysis.correlations.correlations_rule_base import (
 )
 
 
+# Needed for the ability to find the
+# mappings/correlations_index_settings.json file whose path is relative
+# to this file.
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
-# XXX is there not one of these we can import from somewhere else?
 def string_to_list(input_str):
     return [x.strip() for x in input_str.split(',') if x.strip()]
 
@@ -26,14 +28,6 @@ def string_to_list(input_str):
 class Correlations(CorrelationsStorageBase):
 
     required_config = Namespace()
-
-    # required_config.add_option(
-    #     'transaction_executor_class',
-    #     default="socorro.database.transaction_executor."
-    #     "TransactionExecutorWithLimitedBackoff",
-    #     doc='a class that will manage transactions',
-    #     from_string_converter=class_converter,
-    # )
 
     required_config.elasticsearch = Namespace()
     required_config.elasticsearch.add_option(
@@ -121,16 +115,17 @@ class CoreCounts(Correlations):
     def store(
         self,
         counts_summary_structure,
-        **kwargs
+        prefix,
+        name,
+        key,
     ):
-
-        date = self._prefix_to_datetime_date(kwargs['prefix'])
+        date = self._prefix_to_datetime_date(prefix)
         index = self.get_index_for_date(date)
         self.create_correlations_index(index)
 
         notes = counts_summary_structure['notes']
-        product = kwargs['key'].split('_')[0]
-        version = kwargs['key'].split('_')[1]
+        product = key.split('_')[0]
+        version = key.split('_')[1]
         for platform in counts_summary_structure:
             if platform not in self.config.recognized_platforms:
                 continue
@@ -148,19 +143,16 @@ class CoreCounts(Correlations):
                     'signature': signature,
                     'payload': json.dumps(payload),
                     'date': date,
-                    'key': kwargs['name'],
+                    'key': name,
                     'notes': notes,
                 }
-                id = self.make_id(doc)
-                print doc
-                print id
                 with self.es_context() as conn:
                     conn.index(
                         index=index,
                         # see correlations_index_settings.json
                         doc_type='correlations',
                         body=doc,
-                        id=id
+                        id=self.make_id(doc)
                     )
 
     def close(self):
@@ -172,16 +164,18 @@ class InterestingModules(Correlations):
     def store(
         self,
         counts_summary_structure,
-        **kwargs  # XXX unpack this here with what we actually need
+        prefix,
+        name,
+        key,
     ):
 
-        date = self._prefix_to_datetime_date(kwargs['prefix'])
+        date = self._prefix_to_datetime_date(prefix)
         index = self.get_index_for_date(date)
         self.create_correlations_index(index)
 
         notes = counts_summary_structure['notes']
-        product = kwargs['key'].split('_')[0]
-        version = kwargs['key'].split('_')[1]
+        product = key.split('_')[0]
+        version = key.split('_')[1]
         os_counters = counts_summary_structure['os_counters']
         for platform in os_counters:
             if not platform:
@@ -200,19 +194,16 @@ class InterestingModules(Correlations):
                     'signature': signature,
                     'payload': json.dumps(payload),
                     'date': date,
-                    'key': kwargs['name'],
+                    'key': name,
                     'notes': notes,
                 }
-                id = self.make_id(doc)
-                print doc
-                print id
                 with self.es_context() as conn:
                     conn.index(
                         index=index,
                         # see correlations_index_settings.json
                         doc_type='correlations',
                         body=doc,
-                        id=id
+                        id=self.make_id(doc)
                     )
 
     def close(self):
