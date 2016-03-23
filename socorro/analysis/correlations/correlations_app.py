@@ -131,13 +131,11 @@ class CorrelationsApp(FetchTransformSaveWithSeparateNewCrashSourceApp):
         return {
             "number_of_submissions": 'all',
             "source.crashstorage_class":
-            #    'socorro.external.boto.crashstorage.BotoS3CrashStorage',
-               'socorro.external.es.crashstorage.ESCrashBulkProcessedReadStorage',
+               'socorro.external.boto.crashstorage.BotoS3CrashStorage',
             "destination.crashstorage_class":
                 'socorro.external.crashstorage_base.NullCrashStorage',
-            # "new_crash_source.new_crash_source_class":
-            #     'socorro.external.postgresql.new_crash_source'
-            #     '.PGPVNewCrashSource',
+            "new_crash_source.new_crash_source_class":
+                'socorro.external.es.new_crash_source.ESNewCrashSource',
         }
 
     #--------------------------------------------------------------------------
@@ -146,7 +144,9 @@ class CorrelationsApp(FetchTransformSaveWithSeparateNewCrashSourceApp):
             active=True,
             product=self.config.product
         )['hits']
-        versions = [x['version'] for x in hits]
+        versions = [
+            x['version'] for x in hits if not x['version'].endswith('b')
+        ]
         assert versions, "No active versions"
 
         # convert a datetime.date object to datetime.datetime
@@ -159,19 +159,6 @@ class CorrelationsApp(FetchTransformSaveWithSeparateNewCrashSourceApp):
             dt,
             product=self.config.product,
             versions=versions,
-            fields=[
-                # This list is based on doing this grep command:
-                # grep 'crash\[' socorro/analysis/correlations/*rule.py
-                'processed_crash.product',
-                'processed_crash.version',
-                'processed_crash.os_version',
-                'processed_crash.os_name',
-                'processed_crash.signature',
-                'processed_crash.reason',
-                'processed_crash.json_dump',
-                'processed_crash.crash_id',
-                'processed_crash.addons',
-            ],
         )
 
 
