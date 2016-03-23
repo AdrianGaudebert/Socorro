@@ -20,7 +20,7 @@ class ESNewCrashSource(RequiredConfig):
     )
 
     #--------------------------------------------------------------------------
-    def __init__(self, config, name, quit_check_callback=None):
+    def __init__(self, config, name=None, quit_check_callback=None):
         self.config = config
         self.es_context = self.config.elasticsearch.elasticsearch_class(
             config=self.config.elasticsearch
@@ -71,4 +71,6 @@ class ESNewCrashSource(RequiredConfig):
                 query=query,
             )
             for hit in res:
+                print "HIT!!!!!!!!!!!!!!!!!!!!!!"
+                print hit
                 yield hit['fields']['crash_id'][0]
