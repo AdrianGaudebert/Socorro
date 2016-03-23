@@ -5,23 +5,12 @@
 import datetime
 
 from elasticsearch import helpers
-
 from configman import Namespace, RequiredConfig, class_converter
 
 
 class ESNewCrashSource(RequiredConfig):
 
     required_config = Namespace()
-    required_config.add_option(
-        'es_doctype',
-        default='crash_reports',
-    )
-    required_config.add_option(
-        'es_index_template',
-        default='socorro%Y%W',
-        doc='Will be applied with strftime on the date'
-    )
-
     required_config.elasticsearch = Namespace()
     required_config.elasticsearch.add_option(
         'elasticsearch_class',
@@ -54,12 +43,14 @@ class ESNewCrashSource(RequiredConfig):
                         },
                         {
                             'term': {
-                                'processed_crash.product': product
+                                'processed_crash.product': product.lower()
                             }
                         },
                         {
                             'terms': {
-                                'processed_crash.version': versions
+                                'processed_crash.version': [
+                                    x.lower() for x in versions
+                                ]
                             }
                         }
                     ]
@@ -67,15 +58,10 @@ class ESNewCrashSource(RequiredConfig):
             }
         }
 
-        es_index = date.strftime(self.config.es_index_template)
-        es_doctype = self.config.es_doctype
-
-        # print "self.config.elasticsearch", self.config.elasticsearch.items()
-        # print "es_index", es_index
-        # print "es_doctype", es_doctype
+        es_index = date.strftime(self.config.elasticsearch.elasticsearch_index)
+        es_doctype = self.config.elasticsearch.elasticsearch_doctype
 
         with self.es_context() as es_context:
-            # print query
             res = helpers.scan(
                 es_context,
                 scroll='1m',  # keep the "scroll" connection open for 1 minute.
@@ -84,8 +70,5 @@ class ESNewCrashSource(RequiredConfig):
                 fields=['crash_id'],
                 query=query,
             )
-            from pprint import pprint
-            pprint(query)
-
             for hit in res:
                 yield hit['fields']['crash_id'][0]

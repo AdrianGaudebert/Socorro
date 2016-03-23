@@ -4,33 +4,15 @@
 
 import datetime
 import json
-import re
-import os
 
-from itertools import (
-    product as iter_product,
-    ifilter,
-)
-from functools import partial
-
-from collections import defaultdict, Sequence, MutableMapping
-from contextlib import contextmanager
-
-from configman import Namespace, RequiredConfig, class_converter
-from configman.dotdict import DotDict as ConfigmanDotDict
-from configman.converters import list_converter, to_str
-
-from socorro.analysis.correlations import macdebugids
-from socorro.analysis.correlations import addonids
+from configman import Namespace, class_converter
+from configman.dotdict import DotDict
 
 from socorrolib.app.fetch_transform_save_app import (
     FetchTransformSaveWithSeparateNewCrashSourceApp
 )
 
 from socorrolib.lib.datetimeutil import UTC
-from socorrolib.lib.transform_rules import Rule
-from socorrolib.lib.util import DotDict as SocorroDotDict
-from socorrolib.lib.converters import change_default
 from socorro.external.crashstorage_base import CrashIDNotFound
 from socorro.external.postgresql.products import ProductVersions
 from socorro.processor.processor_2015 import rule_sets_from_string
@@ -43,15 +25,15 @@ correlation_rule_sets = [
         "socorrolib.lib.transform_rules.TransformRuleSystem",
         "apply_all_rules",
         "socorro.analysis.correlations.core_count_rule"
-            ".CorrelationCoreCountRule, "
+        ".CorrelationCoreCountRule, "
         "socorro.analysis.correlations.interesting_rule"
-            ".CorrelationInterestingModulesRule,"
+        ".CorrelationInterestingModulesRule,"
         "socorro.analysis.correlations.interesting_rule"
-            ".CorrelationInterestingModulesVersionsRule,"
+        ".CorrelationInterestingModulesVersionsRule,"
         "socorro.analysis.correlations.interesting_rule"
-            ".CorrelationInterestingAddonsRule,"
+        ".CorrelationInterestingAddonsRule,"
         "socorro.analysis.correlations.interesting_rule"
-            ".CorrelationInterestingAddonsVersionsRule,"
+        ".CorrelationInterestingAddonsVersionsRule,"
     ],
 ]
 correlation_rule_sets_as_string = json.dumps(correlation_rule_sets)
@@ -116,26 +98,21 @@ class CorrelationsApp(FetchTransformSaveWithSeparateNewCrashSourceApp):
     #--------------------------------------------------------------------------
     def __init__(self, config, quit_check_callback=None):
         super(CorrelationsApp, self).__init__(config)
-        # self.database = config.database_class(
-        #     config
-        # )
-        # self.transaction = config.transaction_executor_class(
-        #     config,
-        #     self.database,
-        #     quit_check_callback=quit_check_callback
-        # )
 
     #--------------------------------------------------------------------------
     @staticmethod
     def get_application_defaults():
         return {
             "number_of_submissions": 'all',
-            "source.crashstorage_class":
-               'socorro.external.boto.crashstorage.BotoS3CrashStorage',
-            "destination.crashstorage_class":
-                'socorro.external.crashstorage_base.NullCrashStorage',
-            "new_crash_source.new_crash_source_class":
-                'socorro.external.es.new_crash_source.ESNewCrashSource',
+            "source.crashstorage_class": (
+                'socorro.external.boto.crashstorage.BotoS3CrashStorage'
+            ),
+            "destination.crashstorage_class": (
+                'socorro.external.crashstorage_base.NullCrashStorage'
+            ),
+            "new_crash_source.new_crash_source_class": (
+                'socorro.external.es.new_crash_source.ESNewCrashSource'
+            ),
         }
 
     #--------------------------------------------------------------------------
@@ -160,7 +137,6 @@ class CorrelationsApp(FetchTransformSaveWithSeparateNewCrashSourceApp):
             product=self.config.product,
             versions=versions,
         )
-
 
     #--------------------------------------------------------------------------
     def _transform(self, crash_id):
@@ -196,7 +172,7 @@ class CorrelationsApp(FetchTransformSaveWithSeparateNewCrashSourceApp):
     #--------------------------------------------------------------------------
     def _setup_source_and_destination(self):
         super(CorrelationsApp, self)._setup_source_and_destination()
-        self.rule_system = ConfigmanDotDict()
+        self.rule_system = DotDict()
         for a_rule_set_name in self.config.rules.rule_sets.names:
             self.config.logger.debug(
                 'setting up rule set: %s',
