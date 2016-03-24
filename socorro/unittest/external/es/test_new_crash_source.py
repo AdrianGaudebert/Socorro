@@ -20,12 +20,12 @@ a_processed_crash = {
     'address': '0x1c',
     'app_notes': '...',
     'build': '20120309050057',
-    'client_crash_date': '2012-04-08 10:52:42.0',
-    'completeddatetime': '2012-04-08 10:56:50.902884',
+    'client_crash_date': '2012-04-08T10:52:42+00:00',
+    'completeddatetime': '2012-04-08T10:56:50.902884+00:00',
     'cpu_info': 'None | 0',
     'cpu_name': 'arm',
     'crashedThread': 8,
-    'date_processed': '2012-04-08 10:56:41.558922',
+    'date_processed': '2012-04-08T10:56:41.558922+00:00',
     'distributor': None,
     'distributor_version': None,
     'dump': '...',
@@ -50,8 +50,8 @@ a_processed_crash = {
     'release_channel': 'default',
     'ReleaseChannel': 'default',
     'signature': 'libxul.so@0x117441c',
-    'started_datetime': '2012-04-08 10:56:50.440752',
-    'startedDateTime': '2012-04-08 10:56:50.440752',
+    'started_datetime': '2012-04-08T10:56:50.440752+00:00',
+    'startedDateTime': '2012-04-08T10:56:50.440752+00:00',
     'success': True,
     'topmost_filenames': [],
     'truncated': False,
@@ -76,7 +76,7 @@ a_processed_crash = {
 }
 
 a_firefox_processed_crash = deepcopy(a_processed_crash)
-a_firefox_processed_crash['product'] = 'firefox'
+a_firefox_processed_crash['product'] = 'Firefox'
 a_firefox_processed_crash['version'] = '43.0.1'
 a_firefox_processed_crash['uuid'] = '825bc666-ff3b-4c7a-9674-367fe1019397'
 a_firefox_processed_crash['date_processed'] = utc_now().isoformat()
@@ -161,22 +161,17 @@ class IntegrationTestESNewCrashSource(ElasticsearchTestCase):
 
     def test_new_crashes(self):
         new_crash_source = ESNewCrashSource(self.config)
-        es_storage = ESCrashStorage(config=self.config)
-        try:
-            es_storage.save_raw_and_processed(
-                raw_crash=a_raw_crash,
-                dumps=None,
-                processed_crash=a_processed_crash,
-                crash_id=a_processed_crash['uuid']
-            )
-            es_storage.save_raw_and_processed(
-                raw_crash=a_raw_crash,
-                dumps=None,
-                processed_crash=a_firefox_processed_crash,
-                crash_id=a_firefox_processed_crash['uuid']
-            )
-        finally:
-            es_storage.close()
+        self.index_crash(
+            a_processed_crash,
+            raw_crash=a_raw_crash,
+            crash_id=a_processed_crash['uuid']
+        )
+        self.index_crash(
+            a_firefox_processed_crash,
+            raw_crash=a_raw_crash,
+            crash_id=a_firefox_processed_crash['uuid']
+        )
+        self.refresh_index()
 
         assert self.es_client.get(
             index=self.config.elasticsearch.elasticsearch_index,
@@ -187,10 +182,10 @@ class IntegrationTestESNewCrashSource(ElasticsearchTestCase):
             id=a_firefox_processed_crash['uuid']
         )
         from elasticsearch import helpers
-        print list(helpers.scan(
+        print [x['_id'] for x in helpers.scan(
             self.es_client,
             index=self.config.elasticsearch.elasticsearch_index
-        ))
+        )]
 
         # same test now that there is a processed crash in there
         generator = new_crash_source.new_crashes(
