@@ -233,16 +233,18 @@
             },
             sortResults: function (results, container, query) {
                 if (query.term) {
+                    // If there is a search term, return those that
+                    // match left-most in the text or else sort
+                    // alphabetically.
+                    var term = query.term.toLowerCase();
                     return results.sort(function (a, b) {
-                        if (a.text.length > b.text.length) {
-                            return 1;
+                        var leftmostA = a.text.toLowerCase().indexOf(term);
+                        var leftmostB = b.text.toLowerCase().indexOf(term);
+                        if (leftmostA === leftmostB) {
+                            // sort alphabetically
+                            return a.text > b.text ? 1 : -1;
                         }
-                        else if (a.text.length < b.text.length) {
-                            return -1;
-                        }
-                        else {
-                            return 0;
-                        }
+                        return leftmostA - leftmostB;
                     });
                 }
                 return results;
