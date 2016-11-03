@@ -613,16 +613,12 @@ class TestESCrashStorage(ElasticsearchTestCase):
             **additional
         )
 
-    @mock.patch('socorro.external.es.connection_context.elasticsearch')
-    def test_indexing_bogus_string_field(self, espy_mock):
+    @mock.patch('elasticsearch.client')
+    @mock.patch('elasticsearch.Elasticsearch')
+    def test_indexing_bogus_string_field(self, es_class, es_client):
         """Test an index attempt that fails because of a bogus string field.
         Expected behavior is to remove that field and retry indexing.
         """
-
-        # It's mocks all the way down.
-        sub_mock = mock.MagicMock()
-        espy_mock.Elasticsearch.return_value = sub_mock
-
         # ESCrashStorage uses the "limited backoff" transaction executor.
         # In real life this will retry operational exceptions over time, but
         # in unit tests, we just want it to hurry up and fail.
@@ -661,9 +657,10 @@ class TestESCrashStorage(ElasticsearchTestCase):
 
             return True
 
-        sub_mock.index.side_effect = mock_index
+        es_class().index.side_effect = mock_index
 
         # Submit a crash and ensure that it succeeds.
+        # print es_class.mock_calls
         es_storage.save_raw_and_processed(
             raw_crash,
             None,
@@ -682,7 +679,7 @@ class TestESCrashStorage(ElasticsearchTestCase):
             },
             'raw_crash': {},
         }
-        sub_mock.index.assert_called_with(
+        es_class().index.assert_called_with(
             index=self.config.elasticsearch.elasticsearch_index,
             doc_type=self.config.elasticsearch.elasticsearch_doctype,
             body=expected_doc,
